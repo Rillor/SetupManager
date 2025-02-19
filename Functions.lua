@@ -63,7 +63,7 @@ end
 
 -- Function to invite missing players
 local failedInvites = {} -- List to store players who couldn't be invited
--- TOOD: api limitation read (check what kind of message it is)
+-- TODO: api limitation read (check what kind of message it is)
 -- check for api limitation call and then pass call again after a while (check if api limit is exposed to be checkable)
 -- ^- pass playersByBoss[boss]
 
@@ -129,7 +129,7 @@ function SetupManager:InviteMissingPlayers(boss)
             local guildInfo = SetupManager:getGuildInfo() or {}
 
 
-            -- TOOD: check how the fuck a "your party is full error can return even though raid group has 15 spots left ????
+            -- TODO: check how the fuck a "your party is full error can return even though raid group has 15 spots left ????
             for _, failedName in ipairs(failedInvites) do
                 -- Determine the main name: if failedName is an alt, get its main; else failedName
                 local mainCharacter = fullCharList[failedName] or failedName
@@ -175,14 +175,10 @@ end
 SetupManager.currentBoss = nil
 -- TODO: assign alt to position of main in group-assignment
 function SetupManager:AssignPlayersToGroups(boss)
-
-    -- safety check established VMRT as data source
-    -- Dependencies: MRT
-    -- add alts from NSAPI:GetAllCharacters()
-    -- safety notInCombat()
+    local fullCharList = NSAPI and NSAPI:GetAllCharacters() or {}
 
     if not playersByBoss then
-        SetupManager:customPrint("There have been not setups provided yet. Please copy sheet Input.", "err")
+        SetupManager:customPrint("There have been no setups provided yet. Please copy sheet Input.", "err")
         return
     end
 
@@ -190,8 +186,6 @@ function SetupManager:AssignPlayersToGroups(boss)
         SetupManager:customPrint("No Setup for " .. boss, "err")
         return
     end
-
-
 
     SetupManager.currentBoss = boss  -- Store the current boss identifier
 
@@ -208,15 +202,30 @@ function SetupManager:AssignPlayersToGroups(boss)
     for i = 1, totalGroups do
         groupCounts[i] = 0
     end
+
     -- Gather raid members and their current groups
     for i = 1, GetNumGroupMembers() do
         local unitName, _, subgroup = GetRaidRosterInfo(i)
         if subgroup and type(subgroup) == "number" then
             raidMembers[unitName] = { index = i, group = subgroup }
             groupCounts[subgroup] = groupCounts[subgroup] + 1
-            if tContains(players, unitName) then
-                assignedPlayers[unitName] = i
-            else
+
+            -- Normalize names and check main-alt relationship
+            local normalizedUnitName = SetupManager:normalize(unitName)
+            local mainCharacter = fullCharList[normalizedUnitName] or normalizedUnitName
+
+            -- Check if either the character or their main is in the setup
+            local isInSetup = false
+            for _, setupPlayer in ipairs(players) do
+                local normalizedSetupPlayer = SetupManager:normalize(setupPlayer:match("^(.-)%+") or setupPlayer)
+                if normalizedSetupPlayer == SetupManager:normalize(mainCharacter) then
+                    isInSetup = true
+                    assignedPlayers[mainCharacter] = i
+                    break
+                end
+            end
+
+            if not isInSetup then
                 unassignedPlayers[unitName] = i
             end
         end
@@ -237,63 +246,48 @@ function SetupManager:AssignPlayersToGroups(boss)
         end
     end
 
-    -- Create group layout for assigned players
+    -- Create group assignments for players (ignoring slots)
     local groupLayout = {}
     for i = 1, totalGroups do
         groupLayout[i] = {}
     end
 
-    -- First, place players with specified slots
+    -- Assign players to groups based on their slot numbers or sequentially
+    local currentGroup = 1
+    local currentSlot = 1
     for _, player in ipairs(players) do
-        local slot = tonumber(player:match("%+(%d+)$")) -- Extract slot if specified
+        local baseName = player:match("^(.-)%+") or player -- Remove slot number if present
 
-        if slot then
-            local targetGroup = math.ceil(slot / maxGroupMembers)
-            local targetSlot = slot % maxGroupMembers
-            if targetSlot == 0 then
-                targetSlot = maxGroupMembers
-            end
+        -- Move to next group if current group is full
+        if currentSlot > maxGroupMembers then
+            currentGroup = currentGroup + 1
+            currentSlot = 1
+        end
 
-            groupLayout[targetGroup][targetSlot] = player:match("^(.-)%+") -- Remove the slot from the player's name
+        if currentGroup <= 4 then -- Only assign to groups 1-4
+            table.insert(groupLayout[currentGroup], baseName)
+            currentSlot = currentSlot + 1
         end
     end
 
-    -- Then, place players without specified slots
-    local nextSlot = 1
-    for _, player in ipairs(players) do
-        if not player:match("%+(%d+)$") then
-            while groupLayout[math.ceil(nextSlot / maxGroupMembers)][nextSlot % maxGroupMembers] do
-                nextSlot = nextSlot + 1
-            end
-
-            local targetGroup = math.ceil(nextSlot / maxGroupMembers)
-            local targetSlot = nextSlot % maxGroupMembers
-            if targetSlot == 0 then
-                targetSlot = maxGroupMembers
-            end
-
-            groupLayout[targetGroup][targetSlot] = player
-            nextSlot = nextSlot + 1
-        end
-    end
-
-    -- Move assigned players to specified slots within groups
-    -- work in batches if possible (delay them by x(time) to avoid api limitation
-    for group, slots in ipairs(groupLayout) do
-        for _, player in ipairs(slots) do
+    -- Move players to their assigned groups
+    for group, raidPlayers in ipairs(groupLayout) do
+        for _, player in ipairs(raidPlayers) do
             if player and raidMembers[player] then
-                local currentGroup = raidMembers[player].group
-                if currentGroup ~= group then
+                local playerGroup = raidMembers[player].group
+                if playerGroup ~= group then
                     SetRaidSubgroup(raidMembers[player].index, group)
                     groupCounts[group] = groupCounts[group] + 1
-                    groupCounts[currentGroup] = groupCounts[currentGroup] - 1
+                    groupCounts[playerGroup] = groupCounts[playerGroup] - 1
                 end
             else
                 for i = 1, GetNumGroupMembers() do
                     local unitName = GetRaidRosterInfo(i)
                     if unitName == player then
-                        SetRaidSubgroup(i, group)
-                        groupCounts[group] = groupCounts[group] + 1
+                        if currentGroup ~= group then
+                            SetRaidSubgroup(i, group)
+                            groupCounts[group] = groupCounts[group] + 1
+                        end
                         break
                     end
                 end
