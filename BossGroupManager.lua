@@ -84,5 +84,4 @@ setupManager:Hide()
 --[[
 
 TODO:    ❌ implement slot preservation IF slotInfo has been set with function -> table in each boss
-TODO:    ❌ Add NorthernSky Nicknames (NS:API) to filtering and look for matches in currentGroup
 ]]--

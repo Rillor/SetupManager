@@ -31,15 +31,6 @@ function SetupManager:GetClassColor(player)
     return player
 end
 
--- TODO: check if this is still used
-function SetupManager:tableLength(table)
-    local count = 0
-    for _ in pairs(table) do
-        count = count + 1
-    end
-    return count
-end
-
 -- Helper: normalize names (trim and lower-case)
 function SetupManager:normalize(name)
     return (name and name:match("^%s*(.-)%s*$") or ""):lower()
