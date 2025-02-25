@@ -461,6 +461,6 @@ local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("READY_CHECK")
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     if event == "READY_CHECK" and IsInRaid() then
-        SetupManager:ReorderPlayersWithinGroups()
+        -- SetupManager:ReorderPlayersWithinGroups()
     end
 end)
