@@ -208,14 +208,11 @@ function SetupManager:AssignPlayersToGroups(boss)
 
             -- Normalize names and check main-alt relationship
             local mainCharacter = fullCharList[unitName]
-            DevTool:AddData(unitName, "Normalized unit name")
-            DevTool:AddData(mainCharacter, "Main character")
 
             -- Check if either the character or their main is in the setup
             local isInSetup = false
 
             for _, setupPlayer in ipairs(players) do
-                DevTool:AddData(setupPlayer, "Setup player")
                 if setupPlayer == mainCharacter then
                     isInSetup = true
                     assignedPlayers[unitName] = i
@@ -228,15 +225,6 @@ function SetupManager:AssignPlayersToGroups(boss)
             end
         end
     end
-
-    -- CODE WORKS UNTIL HERE
-
-    -- Near the top of AssignPlayersToGroups, after initialization
-    DevTool:AddData(assignedPlayers, "Assigned players list")
-    DevTool:AddData(unassignedPlayers, "Unassigned players list")
-    DevTool:AddData(players, "Initial players list")
-    DevTool:AddData(raidMembers, "Current raid members")
-    DevTool:AddData(fullCharList, "Full character list")
 
     -- move unassignedPlayers to group 5-8
     for unitName, index in pairs(unassignedPlayers) do
@@ -271,8 +259,6 @@ function SetupManager:AssignPlayersToGroups(boss)
 
         groupLayout[targetGroup][targetSlot] = player
     end
-
-    DevTool:AddData(groupLayout, "Group layout")
 
     -- move players to correct group and slot
     for group, slots in ipairs(groupLayout) do
