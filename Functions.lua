@@ -262,18 +262,15 @@ function SetupManager:AssignPlayersToGroups(boss)
 
     -- move players to correct group and slot
     for group, slots in ipairs(groupLayout) do
-        DevTool:AddData(group, "Current group")
-        DevTool:AddData(slots, "Current slots")
         if group <= 4 then
-            DevTool:AddData("enteredLoop")
             for slot, player in ipairs(slots) do
-                DevTool:AddData(player, "Current player")
-                DevTool:AddData(slot, "Current slot")
                 if player then
+
                     local index = raidMembers[player].index + ( 5 * (raidMembers[player].group -1))
                     if index ~= assignedPlayers[player] then
                         SetRaidSubgroup(slot, group)
                     end
+
                 end
             end
         end
@@ -373,7 +370,7 @@ end
 function SetupManager:ReorderPlayersWithinGroups()
     local boss = SetupManager.currentBoss
     if not boss or not playersByBoss[boss] then
-        SetupManager:customPrint("No Setup for current boss", "err")
+        SetupManager:customPrint("Consistency Check is missing boss", "info")
         return
     end
 
