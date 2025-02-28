@@ -39,7 +39,7 @@ end
 -- Function to strip server name from a full player name
 function SetupManager:stripServer(name)
     local baseName = name:match("^(.-)%-.+$") or name  -- Strip server if present
-    return SetupManager:normalize(baseName)
+    return baseName
 end
 
 function SetupManager:getGuildInfo()

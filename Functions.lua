@@ -11,7 +11,7 @@ function SetupManager:toggleImportDialog()
     end
 end
 
--- TODO: add alts to evaluation
+-- TODO: make sure that alt-checking is completely integrated and not some normalize vs nonNormalized bullshit
 -- Function to print players missing from a specific boss setup
 function SetupManager:EvaluateMissingPlayers(boss)
     if not playersByBoss[boss] then
@@ -23,25 +23,28 @@ function SetupManager:EvaluateMissingPlayers(boss)
     local fullCharList = {}
     -- Normalize both keys and values in fullCharList
     for characterName, mainCharacter in pairs(unmodifiedfullCharList) do
-        local normalizedCharacterName = SetupManager:normalize(characterName)
-        local normalizedMainName = SetupManager:normalize(mainCharacter)
-        fullCharList[normalizedCharacterName] = normalizedMainName
+        fullCharList[characterName] = mainCharacter
     end
 
     local missingPlayers = {}
     for _, playerName in ipairs(playersByBoss[boss]) do
         if playerName then
-            local player = playerName:match("^%s*(.-)%s*$") -- Trim spaces
-            local targetPlayer = SetupManager:normalize(player)
+
+            --[[
+                playerName -> Nickname
+
+
+
+            ]]--
+            local player = fullCharList[playerName] or playerName
             local found = false
 
             for i = 1, GetNumGroupMembers() do
                 local unitName = GetRaidRosterInfo(i)
-                local normalizedUnitName = SetupManager:normalize(unitName)
-                -- Map the unit name to its main character
-                local mainCharacter = fullCharList[normalizedUnitName] or normalizedUnitName
+                local nickName = fullCharList[unitName] or unitName
+
                 -- Check if the main name matches the target player
-                if SetupManager:normalize(mainCharacter) == targetPlayer then
+                if nickName == player then
                     found = true
                     break
                 end
@@ -97,14 +100,26 @@ function SetupManager:InviteMissingPlayers(boss)
     end
     failedInvites = failedInvites or {}
 
+    DevTool:AddData({
+        assignedPlayers = assignedPlayers,
+        fullCharList = fullCharList
+    })
+
     for _, playerName in ipairs(assignedPlayers) do
         if playerName then
             local targetPlayer = SetupManager:normalize(playerName)
             local found = false
             for i = 1, GetNumGroupMembers() do
                 local unitName = GetRaidRosterInfo(i)
-                local strippedUnitName = SetupManager:stripServer(unitName)
+                -- TODO: make this smarter lol
+                local strippedUnitName = SetupManager:normalize(SetupManager:stripServer(unitName))
                 local mainName = fullCharList[strippedUnitName] or strippedUnitName
+
+                DevTool:AddData({
+                    unitName = unitName,
+                    strippedUnitName = strippedUnitName,
+                    mainName = mainName
+                })
                 if SetupManager:normalize(mainName) == targetPlayer then
                     found = true
                     break
@@ -122,15 +137,14 @@ function SetupManager:InviteMissingPlayers(boss)
             SetupManager:customPrint("Group converted to a raid.", "info")
         end
 
-
-        -- TODO: check if an alt is in the raid and therefor remove the main from failedInvites to avoid confusing prints
         if #failedInvites > 0 then
             print(table.concat(failedInvites, ", "))
 
+            -- do this outside of function
             local guildInfo = SetupManager:getGuildInfo() or {}
 
 
-            -- TODO: check how the fuck a "your party is full error can return even though raid group has 15 spots left ????
+            -- TODO: check how the fuck a "your party is full" error can return even though raid group has 15 spots left ????
             for _, failedName in ipairs(failedInvites) do
                 -- Determine the main name: if failedName is an alt, get its main; else failedName
                 local mainCharacter = fullCharList[failedName] or failedName
@@ -159,7 +173,7 @@ function SetupManager:InviteMissingPlayers(boss)
                             end
                         end
                         if not invitedAny then
-                            SetupManager:customPrint("No alts of " .. failedName .. " found online.", "err")
+                            SetupManager:customPrint("No alts of " .. failedName .. " found online.", "info")
                         end
                     end
                 end
@@ -171,7 +185,6 @@ function SetupManager:InviteMissingPlayers(boss)
 end
 
 SetupManager.currentBoss = nil
--- TODO: assign alt to position of main in group-assignment
 function SetupManager:AssignPlayersToGroups(boss)
     local fullCharList = NSAPI and NSAPI:GetAllCharacters() or {}
 
@@ -198,22 +211,41 @@ function SetupManager:AssignPlayersToGroups(boss)
         groupCounts[i] = 0
     end
 
+
+
     -- getRaidRosterInfo
     for i = 1, GetNumGroupMembers() do
         local unitName, _, subgroup = GetRaidRosterInfo(i)
+        unitName = SetupManager:stripServer(unitName)
 
+        -- nickname to mainCharacter -> alts after if needed
         if subgroup and type(subgroup) == "number" then
             raidMembers[unitName] = { index = i, group = subgroup }
             groupCounts[subgroup] = groupCounts[subgroup] + 1
 
-            -- Normalize names and check main-alt relationship
-            local mainCharacter = fullCharList[unitName]
-
+            local nickName = fullCharList[unitName]
             -- Check if either the character or their main is in the setup
             local isInSetup = false
 
+
+
             for _, setupPlayer in ipairs(players) do
-                if setupPlayer == mainCharacter then
+
+
+                -- here "Dogmá" fails
+                --[[
+                1. Monda
+                2. Monda-Blackmoore
+
+                1. Dogma
+                2. Dogmá
+
+
+                ]]--
+                local setupPlayerWOServer = SetupManager:stripServer(setupPlayer)
+                local currentlyParsedSetupPlayer = fullCharList[setupPlayerWOServer] or setupPlayer
+                -- make check if no nicknames are provided to 1:1 parse setupPlayers to assignedPlayers
+                if currentlyParsedSetupPlayer == nickName then
                     isInSetup = true
                     assignedPlayers[unitName] = i
                     break
