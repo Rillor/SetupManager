@@ -80,8 +80,3 @@ end
 -- Ensure UpdateBossButtons is called to initialize the buttons
 SetupManager:UpdateBossButtons()
 setupManager:Hide()
-
---[[
-
-TODO:    ❌ implement slot preservation IF slotInfo has been set with function -> table in each boss
-]]--
