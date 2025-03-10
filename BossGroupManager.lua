@@ -1,7 +1,8 @@
 local _, SetupManager = ...
 
 -- Define the bosses table
-SetupManager.bosses = { "Ulgrax", "Horror", "Sikran", "Rasha'nan", "Ovi'nax", "Ky'veza", "Court", "Ansurek" }
+SetupManager.bosses = {"Vexie","Cauldron","Rik","Stix","Lockenstock","Bandit","Mug'Zee","Gallywix"}
+
 
 -- Initialize playersByBoss
 if not playersByBoss then
