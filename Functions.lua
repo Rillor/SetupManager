@@ -1,6 +1,7 @@
 local _, SetupManager = ...
+-- TODO: add debugging variable dependency on DevTools Addon. So it only prints when that is enabled
 
--- build function to verify majority is from guild (either NS aura_env or hardcode)
+-- TODO: build function to verify majority is from guild (either NS aura_env or hardcode)
 
 -- open importDialog
 function SetupManager:toggleImportDialog()
@@ -100,10 +101,11 @@ function SetupManager:InviteMissingPlayers(boss)
     end
     failedInvites = failedInvites or {}
 
-    DevTool:AddData({
+    --[[ DevTool:AddData({
         assignedPlayers = assignedPlayers,
         fullCharList = fullCharList
     })
+    ]]--
 
     for _, playerName in ipairs(assignedPlayers) do
         if playerName then
@@ -115,11 +117,13 @@ function SetupManager:InviteMissingPlayers(boss)
                 local strippedUnitName = SetupManager:normalize(SetupManager:stripServer(unitName))
                 local mainName = fullCharList[strippedUnitName] or strippedUnitName
 
-                DevTool:AddData({
+                --[[ DevTool:AddData({
                     unitName = unitName,
                     strippedUnitName = strippedUnitName,
                     mainName = mainName
                 })
+                ]]--
+
                 if SetupManager:normalize(mainName) == targetPlayer then
                     found = true
                     break
@@ -197,6 +201,7 @@ function SetupManager:AssignPlayersToGroups(boss)
         SetupManager:customPrint("No Setup for " .. boss, "err")
         return
     end
+    -- DevTool:AddData({fullCharList, playersByBoss})
     SetupManager.currentBoss = boss  -- Store the current boss identifier
     local players = playersByBoss[boss]
     local maxGroupMembers = 5
@@ -223,7 +228,7 @@ function SetupManager:AssignPlayersToGroups(boss)
             raidMembers[unitName] = { index = i, group = subgroup }
             groupCounts[subgroup] = groupCounts[subgroup] + 1
 
-            local nickName = fullCharList[unitName]
+            local nickName = fullCharList[unitName] or unitName
             -- Check if either the character or their main is in the setup
             local isInSetup = false
 

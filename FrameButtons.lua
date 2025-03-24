@@ -20,6 +20,7 @@ function SetupManager:UpdateBossButtons()
         button:SetPoint("TOPLEFT", xOffset, yOffset + (-1 * (buttonHeight + 5) * index)) -- Adjust vertical spacing
         button:SetNormalFontObject("GameFontHighlight")
 
+
         -- Create a texture and set it as the button's background
         local normalTexture = button:CreateTexture()
         normalTexture:SetAllPoints()
