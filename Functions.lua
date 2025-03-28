@@ -145,7 +145,12 @@ function SetupManager:InviteMissingPlayers(boss)
             print(table.concat(failedInvites, ", "))
 
             -- do this outside of function
-            local guildInfo = SetupManager:getGuildInfo() or {}
+            local guildInfo = SetupManager:getGuildInfo()
+
+            if guildInfo == nil then
+                SetupManager:customPrint("Unable to fetch guild info. Are you even in a guild bro?", "err")
+                return
+            end
 
 
             -- TODO: check how the fuck a "your party is full" error can return even though raid group has 15 spots left ????
@@ -267,11 +272,11 @@ function SetupManager:AssignPlayersToGroups(boss)
     for unitName, index in pairs(unassignedPlayers) do
         local currentGroup = raidMembers[unitName].group
         if currentGroup <= 4 then
-            for newGroup = 5, totalGroups do
+            for newGroup = 8, totalGroups do
                 if groupCounts[newGroup] < maxGroupMembers then
                     SetRaidSubgroup(index, newGroup)
-                    groupCounts[newGroup] = groupCounts[newGroup] + 1
-                    groupCounts[currentGroup] = groupCounts[currentGroup] - 1
+                    groupCounts[newGroup] = groupCounts[newGroup] - 1
+                    groupCounts[currentGroup] = groupCounts[currentGroup] + 1
                     break
                 end
             end
