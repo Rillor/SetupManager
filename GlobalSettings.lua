@@ -1,0 +1,3 @@
+local _, SetupManager = ...
+
+-- use this for general global settings inside the addon instead of currently implementing them into code - e.g. colors, fonts, etc.
