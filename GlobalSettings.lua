@@ -16,8 +16,8 @@ SetupManager.gs = {
             first = CreateColor(31/255, 31/255, 31/255, 0.3),
             second = CreateColor(36/255, 36/255, 36/255, 0.3)
         },
-        defaultColor = { r =31 / 255, g = 31 / 255, b = 31 / 255, a = 0.85 },
-        defaultHighlightColor = { r =41 / 255, g = 41 / 255, b = 41 / 255, a = 0.85 },
+        defaultColor = { r =31 / 255, g = 31 / 255, b = 31 / 255, a = 0.90 },
+        defaultHighlightColor = { r =41 / 255, g = 41 / 255, b = 41 / 255, a = 0.90 },
         buttonColor = { r = 41 / 255, g = 41 / 255, b = 41 / 255, a = 1 },
     }
 }

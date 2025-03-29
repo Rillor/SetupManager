@@ -2,7 +2,7 @@ local _, SetupManager = ...
 
 local visual = SetupManager.gs.visual
 
--- Create a container frame for the entire UI
+-- setup frame
 SetupManager.setupManager = CreateFrame("Frame", nil, UIParent)
 
 SetupManager.setupManager.texture = SetupManager.setupManager:CreateTexture(nil, "OVERLAY")
