@@ -1,6 +1,6 @@
 local _, SetupManager = ...
 -- TODO: add menu to clicking minimap instead of handling LEFT/RIGHT click
-local constant_icon = "Interface\\AddOns\\SetupManager\\constantLogo.tga"
+local constant_icon = "Interface\\AddOns\\SetupManager\\Interface\\constantLogo.tga"
 
 
 -- Create the frame for the Minimap button
@@ -68,7 +68,7 @@ SetupManager.MiniMapButton:SetScript("OnEnter", function(self)
         tooltip:Show()
 end)
 
-SetupManager.MiniMapButton:SetScript("OnLeave", function(self)
+SetupManager.MiniMapButton:SetScript("OnLeave", function()
     GameTooltip:Hide()
 end)
 

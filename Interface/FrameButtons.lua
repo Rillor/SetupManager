@@ -14,7 +14,7 @@ function SetupManager:UpdateBossButtons()
     local index = 0
 
     for _, boss in ipairs(SetupManager.bosses) do
-        local button = CreateFrame("Button", "BossButton" .. index, SetupManager.BossGroupManager, "UIPanelButtonTemplate")
+        local button = CreateFrame("Button", "BossButton" .. index, SetupManager.BossGroupManager)
         button:SetSize(buttonWidth, buttonHeight)
         button:SetText(boss)
         button:SetPoint("TOPLEFT", xOffset, yOffset + (-1 * (buttonHeight + 5) * index)) -- Adjust vertical spacing
@@ -24,13 +24,13 @@ function SetupManager:UpdateBossButtons()
         -- Create a texture and set it as the button's background
         local normalTexture = button:CreateTexture()
         normalTexture:SetAllPoints()
-        normalTexture:SetColorTexture(0.11, 0.11, 0.11, 1) -- RGB values for #1c1c1c
+        normalTexture:SetColorTexture(46 /255, 46/255, 46/255, 1) -- RGB values for #1c1c1c
         button:SetNormalTexture(normalTexture)
 
         -- Create a texture for hover and set it as the highlight texture
         local highlightTexture = button:CreateTexture()
         highlightTexture:SetAllPoints()
-        highlightTexture:SetColorTexture(0.3, 0.3, 0.3, 1) -- Brighter shade for hover
+        highlightTexture:SetColorTexture(0.2, 0.2, 0.2, 1) -- Brighter shade for hover
         button:SetHighlightTexture(highlightTexture)
 
         button:SetScript("OnClick", function()
@@ -38,8 +38,13 @@ function SetupManager:UpdateBossButtons()
         end)
         button:Show()
 
+
+        local borderColor = SetupManager.gs.visual.borderColor
+        SetupManager:AddBorder(button)
+        button:SetBorderColor(borderColor.r, borderColor.g, borderColor.b)
+
         -- Create an invite button
-        local inviteButton = CreateFrame("Button", "InviteButton" .. index, SetupManager.BossGroupManager, "UIPanelButtonTemplate")
+        local inviteButton = CreateFrame("Button", "InviteButton" .. index, SetupManager.BossGroupManager)
         inviteButton:SetSize(buttonHeight, buttonHeight) -- Match height of other buttons
         inviteButton:SetPoint("LEFT", button, "RIGHT", 10, 0)
         inviteButton:SetNormalFontObject("GameFontHighlight")
@@ -47,7 +52,7 @@ function SetupManager:UpdateBossButtons()
         -- Set icon as the button's background
         local inviteNormalTexture = inviteButton:CreateTexture()
         inviteNormalTexture:SetAllPoints()
-        inviteNormalTexture:SetTexture("Interface\\Icons\\inv_letter_15") -- Mail icon path
+        inviteNormalTexture:SetTexture("Interface/Minimap/Tracking/Mailbox")-- Mail icon path
         inviteButton:SetNormalTexture(inviteNormalTexture)
 
         -- Create a texture for hover and set it as the highlight texture

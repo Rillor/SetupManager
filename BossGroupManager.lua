@@ -24,7 +24,7 @@ SetupManager.titleContainer:SetPoint("TOP", SetupManager.BossGroupManager, "TOP"
 -- Icon to the left of the title
 local titleIcon = SetupManager.titleContainer:CreateTexture(nil, "OVERLAY")
 titleIcon:SetSize(32, 32) -- Adjust size as needed
-titleIcon:SetTexture("Interface\\AddOns\\SetupManager\\constantLogo.tga") -- Adjust path as needed
+titleIcon:SetTexture("Interface\\AddOns\\SetupManager\\Interface\\constantLogo.tga") -- Adjust path as needed
 titleIcon:SetPoint("LEFT", 8, 0)
 
 -- Title for the main frame
