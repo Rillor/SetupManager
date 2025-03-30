@@ -40,6 +40,7 @@ SetupManager.BossGroupManager:SetScript("OnEvent", function(_, event, addonName)
             BossGroupManagerSaved = {}
         end
         playersByBoss = BossGroupManagerSaved.playersByBoss or {}
+        SetupManager:debug(BossGroupManagerSaved.playersByBoss,"saved setups")
         SetupManager:UpdateBossButtons()
     elseif event == "PLAYER_LOGOUT" then
         BossGroupManagerSaved.playersByBoss = playersByBoss

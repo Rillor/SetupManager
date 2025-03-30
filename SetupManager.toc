@@ -9,10 +9,13 @@
 ## Category: constant
 GlobalSettings.lua
 Utils.lua
+Interface\FrameUtils.lua
 Functions.lua
-Interface\Frames.lua
+Interface\mainFrame.lua
+Interface\importFrame.lua
 Interface\FrameButtons.lua
 Interface\MiniMap.lua
+Interface\missingPlayersFrame.lua
 BossGroupManager.lua
 
 

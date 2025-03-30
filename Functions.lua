@@ -138,7 +138,7 @@ function SetupManager:InviteMissingPlayers(boss)
     C_Timer.After(1, function()
         if IsInGroup() and not IsInRaid() then
             ConvertToRaid()
-            SetupManager:customPrint("Group converted to a raid.", "info")
+            SetupManager:debug("Group converted to a raid.")
         end
 
         if #failedInvites > 0 then
@@ -187,7 +187,7 @@ function SetupManager:InviteMissingPlayers(boss)
                     end
                 end
             end
-
+            SetupManager:ShowFailedInvites(failedInvites)
             failedInvites = {}
         end
     end)
@@ -409,6 +409,7 @@ function SetupManager:ClearBosses()
 end
 
 -- Function to reorder players within their groups based on slots
+--[[
 function SetupManager:ReorderPlayersWithinGroups()
     local boss = SetupManager.currentBoss
     if not boss or not playersByBoss[boss] then
@@ -497,3 +498,4 @@ function SetupManager:ReorderPlayersWithinGroups()
 
     SetupManager:customPrint("Reordered players within groups 1-4 successfully.", "success")
 end
+]]--
