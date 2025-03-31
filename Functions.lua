@@ -1,6 +1,4 @@
 local _, SetupManager = ...
--- TODO: add debugging variable dependency on DevTools Addon. So it only prints when that is enabled
-
 -- TODO: build function to verify majority is from guild (either NS aura_env or hardcode)
 
 -- open importDialog
@@ -42,10 +40,15 @@ function SetupManager:EvaluateMissingPlayers(boss)
 
             for i = 1, GetNumGroupMembers() do
                 local unitName = GetRaidRosterInfo(i)
+                SetupManager:debug(unitName,"unitName")
+                unitName = SetupManager:stripServer(unitName)
+                SetupManager:debug(unitName,"unitName")
                 local nickName = fullCharList[unitName] or unitName
+                local playerWOServer = SetupManager:stripServer(player)
+                local playerNickname = fullCharList[playerWOServer] or playerWOServer
 
                 -- Check if the main name matches the target player
-                if nickName == player then
+                if nickName == playerNickname then
                     found = true
                     break
                 end
@@ -58,8 +61,7 @@ function SetupManager:EvaluateMissingPlayers(boss)
     end
 
     if #missingPlayers > 0 then
-        SetupManager:customPrint("Players missing from " .. boss .. " setup:", "err")
-        print(table.concat(missingPlayers, ", "))
+        SetupManager:ShowFailedInvites(missingPlayers)
     else
         SetupManager:customPrint("All assigned players (or their alts) are present for " .. boss .. ".", "success")
     end
@@ -110,11 +112,16 @@ function SetupManager:InviteMissingPlayers(boss)
     for _, playerName in ipairs(assignedPlayers) do
         if playerName then
             local targetPlayer = SetupManager:normalize(playerName)
+            SetupManager:debug(targetPlayer, "targetPlayer")
             local found = false
             for i = 1, GetNumGroupMembers() do
                 local unitName = GetRaidRosterInfo(i)
                 -- TODO: make this smarter lol
                 local strippedUnitName = SetupManager:normalize(SetupManager:stripServer(unitName))
+                SetupManager:debug({
+                    unitName = unitName,
+                    strippedUnitName = strippedUnitName
+                },"unit iteration info" .. playerName)
                 local mainName = fullCharList[strippedUnitName] or strippedUnitName
 
                 --[[ DevTool:AddData({
@@ -124,6 +131,7 @@ function SetupManager:InviteMissingPlayers(boss)
                 })
                 ]]--
 
+                SetupManager:debug(mainName, "mainName")
                 if SetupManager:normalize(mainName) == targetPlayer then
                     found = true
                     break
@@ -156,6 +164,7 @@ function SetupManager:InviteMissingPlayers(boss)
             -- TODO: check how the fuck a "your party is full" error can return even though raid group has 15 spots left ????
             for _, failedName in ipairs(failedInvites) do
                 -- Determine the main name: if failedName is an alt, get its main; else failedName
+                SetupManager:debug("there are failed invites")
                 local mainCharacter = fullCharList[failedName] or failedName
                 local normalizedMain = SetupManager:normalize(mainCharacter)
 
@@ -165,10 +174,16 @@ function SetupManager:InviteMissingPlayers(boss)
                 else
                     local altList = {}
                     for characterName, mappedMain in pairs(fullCharList) do
+                        -- NSAPI:GetCharacters(str) get list for setupPlayer via this command and use it only on missing ones, no need to evaluate it yourself.
                         if SetupManager:normalize(mappedMain) == normalizedMain and SetupManager:normalize(characterName) ~= normalizedMain then
                             table.insert(altList, characterName)
                         end
                     end
+
+                    SetupManager:debug({
+                        altList = altList,
+                        failedName = failedName
+                    })
 
                     if #altList > 0 then
                         local invitedAny = false
@@ -241,7 +256,6 @@ function SetupManager:AssignPlayersToGroups(boss)
 
             for _, setupPlayer in ipairs(players) do
 
-
                 -- here "Dogmá" fails
                 --[[
                 1. Monda
@@ -253,7 +267,15 @@ function SetupManager:AssignPlayersToGroups(boss)
 
                 ]]--
                 local setupPlayerWOServer = SetupManager:stripServer(setupPlayer)
-                local currentlyParsedSetupPlayer = fullCharList[setupPlayerWOServer] or setupPlayer
+                local currentlyParsedSetupPlayer = fullCharList[setupPlayerWOServer] or setupPlayerWOServer
+
+                SetupManager:debug({
+                    currentlyParsedSetupPlayer = currentlyParsedSetupPlayer,
+                    nickName = nickName,
+                    setupPlayer = setupPlayer,
+                    setupPlayerNM = setupPlayerNM
+                }, "currentlyParsedSetupPlayer")
+
                 -- make check if no nicknames are provided to 1:1 parse setupPlayers to assignedPlayers
                 if currentlyParsedSetupPlayer == nickName then
                     isInSetup = true
