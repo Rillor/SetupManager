@@ -182,8 +182,9 @@ function SetupManager:InviteMissingPlayers(boss)
 
                     SetupManager:debug({
                         altList = altList,
-                        failedName = failedName
-                    })
+                        failedName = failedName,
+                        guildInfo = guildInfo
+                    },"invite iteration info")
 
                     if #altList > 0 then
                         local invitedAny = false
@@ -276,7 +277,7 @@ function SetupManager:AssignPlayersToGroups(boss)
                     setupPlayerNM = setupPlayerNM
                 }, "currentlyParsedSetupPlayer")
 
-                -- make check if no nicknames are provided to 1:1 parse setupPlayers to assignedPlayers
+
                 if currentlyParsedSetupPlayer == nickName then
                     isInSetup = true
                     assignedPlayers[unitName] = i
@@ -312,6 +313,7 @@ function SetupManager:AssignPlayersToGroups(boss)
     end
 
     -- place players in group 1-4 based on assignedPlayers( player, slot)
+    -- TODO: ensure player is not moved if they're present in 1-4
     for player, slot in pairs(assignedPlayers) do
         slot = tonumber(slot)
         local targetGroup = math.ceil(slot / maxGroupMembers)
