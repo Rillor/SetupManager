@@ -189,7 +189,7 @@ function SetupManager:InviteMissingPlayers(boss)
                     if #altList > 0 then
                         local invitedAny = false
                         for _, altName in ipairs(altList) do
-                            local altKey = SetupManager:normalize(altName)
+                            local altKey = altName
                             DevTool:AddData( {
                                 altKey = altKey,
                                 guildInfo = guildInfo
