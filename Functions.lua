@@ -190,6 +190,10 @@ function SetupManager:InviteMissingPlayers(boss)
                         local invitedAny = false
                         for _, altName in ipairs(altList) do
                             local altKey = SetupManager:normalize(altName)
+                            DevTool:AddData( {
+                                altKey = altKey,
+                                guildInfo = guildInfo
+                            }, "guild info for alts" .. failedName)
                             local altInfo = guildInfo[altKey]
                             if altInfo and altInfo.online then
                                 C_PartyInfo.InviteUnit(altInfo.fullName)
