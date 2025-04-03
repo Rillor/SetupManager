@@ -103,6 +103,9 @@ function SetupManager:InviteMissingPlayers(boss)
     end
     failedInvites = failedInvites or {}
 
+
+
+
     --[[ DevTool:AddData({
         assignedPlayers = assignedPlayers,
         fullCharList = fullCharList
@@ -117,22 +120,10 @@ function SetupManager:InviteMissingPlayers(boss)
             for i = 1, GetNumGroupMembers() do
                 local unitName = GetRaidRosterInfo(i)
                 -- TODO: make this smarter lol
-                local strippedUnitName = SetupManager:normalize(SetupManager:stripServer(unitName))
-                SetupManager:debug({
-                    unitName = unitName,
-                    strippedUnitName = strippedUnitName
-                },"unit iteration info" .. playerName)
+                local strippedUnitName = SetupManager:stripServer(unitName)
                 local mainName = fullCharList[strippedUnitName] or strippedUnitName
 
-                --[[ DevTool:AddData({
-                    unitName = unitName,
-                    strippedUnitName = strippedUnitName,
-                    mainName = mainName
-                })
-                ]]--
-
-                SetupManager:debug(mainName, "mainName")
-                if SetupManager:normalize(mainName) == targetPlayer then
+                if SetupManager:normalize(mainName) == fullCharList[targetPlayer] or targetPlayer then
                     found = true
                     break
                 end
@@ -145,7 +136,7 @@ function SetupManager:InviteMissingPlayers(boss)
 
     C_Timer.After(1, function()
         if IsInGroup() and not IsInRaid() then
-            ConvertToRaid()
+            C_PartyInfo.ConvertToRaid()
             SetupManager:debug("Group converted to a raid.")
         end
 
@@ -159,6 +150,9 @@ function SetupManager:InviteMissingPlayers(boss)
                 SetupManager:customPrint("Unable to fetch guild info. Are you even in a guild bro?", "err")
                 return
             end
+
+            --TODO: excluse players already in group from being queried for alts
+
 
 
             -- TODO: check how the fuck a "your party is full" error can return even though raid group has 15 spots left ????
@@ -190,14 +184,10 @@ function SetupManager:InviteMissingPlayers(boss)
                         local invitedAny = false
                         for _, altName in ipairs(altList) do
                             local altKey = altName
-                            DevTool:AddData( {
-                                altKey = altKey,
-                                guildInfo = guildInfo
-                            }, "guild info for alts" .. failedName)
                             local altInfo = guildInfo[altKey]
                             if altInfo and altInfo.online then
-                                C_PartyInfo.InviteUnit(altInfo.fullName)
                                 invitedAny = true
+                                C_PartyInfo.InviteUnit(altInfo.fullName)
                                 break
                             end
                         end
