@@ -6,7 +6,7 @@ This Addon sole purpose is to be used with out guild sheet. The format can be se
 
 ![Wow_X0paE95VWQ](https://github.com/user-attachments/assets/0eb30cf3-541d-4db6-84db-7d486ffa4178)
 
-29.03.2025 - refactored code to make it work without nicknames
+29.03.2025 - refactored code to make it work without nicknames.
 Alt functionality requires NorthernSky Nickname Database and requires said characters to be in the guild.
 
 As of 29th Macrch this is still a very early version - expect to have bugs, unhandeld scenarios etc.
