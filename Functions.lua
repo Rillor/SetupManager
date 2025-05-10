@@ -18,52 +18,33 @@ function SetupManager:EvaluateMissingPlayers(boss)
         return
     end
 
-    unmodifiedfullCharList = NSAPI and NSAPI:GetAllCharacters() or {} -- need to do this in assign too
-    local fullCharList = {}
-    -- Normalize both keys and values in fullCharList
-    for characterName, mainCharacter in pairs(unmodifiedfullCharList) do
-        fullCharList[characterName] = mainCharacter
+    if not NSPAI then
+        return
     end
 
-    local missingPlayers = {}
-    for _, playerName in ipairs(playersByBoss[boss]) do
-        if playerName then
-
-            --[[
-                playerName -> Nickname
-
-
-
-            ]]--
-            local player = fullCharList[playerName] or playerName
+    for _, setupPlayer in ipairs(playersByBoss[boss]) do
+        if setupPlayer then
             local found = false
+            local nickname = NSAPI:GetName(setupPlayer) -- Rilla TODO: update this to include addon name(?)
 
             for i = 1, GetNumGroupMembers() do
-                local unitName = GetRaidRosterInfo(i)
-                SetupManager:debug(unitName,"unitName")
-                unitName = SetupManager:stripServer(unitName)
-                SetupManager:debug(unitName,"unitName")
-                local nickName = fullCharList[unitName] or unitName
-                local playerWOServer = SetupManager:stripServer(player)
-                local playerNickname = fullCharList[playerWOServer] or playerWOServer
+                local unitName = GetRaidRosterInfo(i) -- Rillap-Blackrock
+                local gmNickname = NSAPI:GetName(unitName) -- Rilla
 
-                -- Check if the main name matches the target player
-                if nickName == playerNickname then
+                if nickname == gmNickname then
                     found = true
                     break
                 end
-            end
 
-            if not found then
-                table.insert(missingPlayers, SetupManager:GetClassColor(player))
+                if not found then
+                    table.insert(missingPlayers, setupPlayer)
+                end
             end
         end
-    end
 
-    if #missingPlayers > 0 then
-        SetupManager:ShowFailedInvites(missingPlayers)
-    else
-        SetupManager:customPrint("All assigned players (or their alts) are present for " .. boss .. ".", "success")
+        if #missingPlayers > 0 then
+            SetupManager:ShowFailedInvites(missingPlayers)
+        end
     end
 end
 
@@ -77,6 +58,15 @@ local failedInvites = {} -- List to store players who couldn't be invited
 -- Function to handle system messages
 local function SystemMessageHandler(msg)
     local playerName = msg:match("Cannot find player '([^']+)'") -- Adjust pattern to extract player name
+
+    if not playerName then
+        return
+    end
+
+    if not strfind(playerName, "-") then
+        playerName = playerName .. "-Blackrock"
+    end
+
     if playerName then
         table.insert(failedInvites, playerName)
     end
@@ -93,107 +83,64 @@ frame:SetScript("OnEvent", function(_, event, ...)
     end
 end)
 
-function SetupManager:InviteMissingPlayers(boss)
-    local fullCharList = NSAPI and NSAPI:GetAllCharacters() or {}
-
-    local assignedPlayers = playersByBoss[boss]
-    if not assignedPlayers then
-        SetupManager:customPrint("No Setup for " .. boss, "err")
+function SetupManager:Invite(boss)
+    if not playersByBoss[boss] then
         return
     end
-    failedInvites = failedInvites or {}
 
+    failedInvites = {}
 
-
-
-    --[[ DevTool:AddData({
-        assignedPlayers = assignedPlayers,
-        fullCharList = fullCharList
-    })
-    ]]--
-
-    for _, playerName in ipairs(assignedPlayers) do
-        if playerName then
-            local targetPlayer = SetupManager:normalize(playerName)
-            SetupManager:debug(targetPlayer, "targetPlayer")
+    for _, player in ipairs(playersByBoss[boss]) do
+        if player then
             local found = false
-            for i = 1, GetNumGroupMembers() do
-                local unitName = GetRaidRosterInfo(i)
-                -- TODO: make this smarter lol
-                local strippedUnitName = SetupManager:stripServer(unitName)
-                local mainName = fullCharList[strippedUnitName] or strippedUnitName
+            local nickname = NSAPI:GetName(player) -- Rilla TODO: update this to include addon name(?)
 
-                if SetupManager:normalize(mainName) == fullCharList[targetPlayer] or targetPlayer then
+            for i = 1, GetNumGroupMembers() do
+                local unitName = GetRaidRosterInfo(i) -- Rillap-Blackrock
+                local gmNickname = NSAPI:GetName(unitName) -- Rilla
+
+                if nickname == gmNickname then
                     found = true
                     break
                 end
             end
+
             if not found then
-                C_PartyInfo.InviteUnit(playerName)
+                C_PartyInfo.InviteUnit(player)
             end
         end
     end
 
     C_Timer.After(1, function()
+        -- convert group to raid
         if IsInGroup() and not IsInRaid() then
             C_PartyInfo.ConvertToRaid()
-            SetupManager:debug("Group converted to a raid.")
         end
 
         if #failedInvites > 0 then
-            print(table.concat(failedInvites, ", "))
-
-            -- do this outside of function
             local guildInfo = SetupManager:getGuildInfo()
 
-            if guildInfo == nil then
-                SetupManager:customPrint("Unable to fetch guild info. Are you even in a guild bro?", "err")
-                return
-            end
+            -- TODO: register nickname in failedInvites instead of characterName
+            for _, failedPlayer in ipairs(failedInvites) do
+                DevTool:AddData(failedPlayer, "failedPlayer")
+                local fpNickname = NSAPI:GetName(failedPlayer) -- Rilla
 
-            --TODO: excluse players already in group from being queried for alts
+                local altList = NSAPI:GetCharacters(fpNickname)
+                DevTool:AddData(altList, "altList for player")
 
-
-
-            -- TODO: check how the fuck a "your party is full" error can return even though raid group has 15 spots left ????
-            for _, failedName in ipairs(failedInvites) do
-                -- Determine the main name: if failedName is an alt, get its main; else failedName
-                SetupManager:debug("there are failed invites")
-                local mainCharacter = fullCharList[failedName] or failedName
-                local normalizedMain = SetupManager:normalize(mainCharacter)
-
-                local mainInfo = guildInfo[normalizedMain]
-                if mainInfo and mainInfo.online then
-                    C_PartyInfo.InviteUnit(mainInfo.fullName)
-                else
-                    local altList = {}
-                    for characterName, mappedMain in pairs(fullCharList) do
-                        -- NSAPI:GetCharacters(str) get list for setupPlayer via this command and use it only on missing ones, no need to evaluate it yourself.
-                        if SetupManager:normalize(mappedMain) == normalizedMain and SetupManager:normalize(characterName) ~= normalizedMain then
-                            table.insert(altList, characterName)
+                if altList then
+                    local invitedAny = false
+                    for _, characterName in ipairs(altList) do
+                        local charName = characterName:match("^(.-)%-.+$") or characterName -- strip server from characterName as guildInfo does not include it in key
+                        local altInfo = guildInfo[charName]
+                        if altInfo and altInfo.online then
+                            invitedAny = true
+                            C_PartyInfo.InviteUnit(altInfo.fullName)
+                            break
                         end
                     end
-
-                    SetupManager:debug({
-                        altList = altList,
-                        failedName = failedName,
-                        guildInfo = guildInfo
-                    },"invite iteration info")
-
-                    if #altList > 0 then
-                        local invitedAny = false
-                        for _, altName in ipairs(altList) do
-                            local altKey = altName
-                            local altInfo = guildInfo[altKey]
-                            if altInfo and altInfo.online then
-                                invitedAny = true
-                                C_PartyInfo.InviteUnit(altInfo.fullName)
-                                break
-                            end
-                        end
-                        if not invitedAny then
-                            SetupManager:customPrint("No alts of " .. failedName .. " found online.", "info")
-                        end
+                    if not invitedAny then
+                        SetupManager:customPrint("No character online for " .. failedPlayer, "err")
                     end
                 end
             end
@@ -205,7 +152,6 @@ end
 
 SetupManager.currentBoss = nil
 function SetupManager:AssignPlayersToGroups(boss)
-    local fullCharList = NSAPI and NSAPI:GetAllCharacters() or {}
 
     if not playersByBoss then
         SetupManager:customPrint("There have been no setups provided yet. Please copy sheet Input.", "err")
@@ -216,9 +162,12 @@ function SetupManager:AssignPlayersToGroups(boss)
         SetupManager:customPrint("No Setup for " .. boss, "err")
         return
     end
-    -- DevTool:AddData({fullCharList, playersByBoss})
+
+    if not NSAPI then
+        return
+    end
+
     SetupManager.currentBoss = boss  -- Store the current boss identifier
-    local players = playersByBoss[boss]
     local maxGroupMembers = 5
     local totalGroups = 8
     local raidMembers = {}
@@ -231,70 +180,49 @@ function SetupManager:AssignPlayersToGroups(boss)
         groupCounts[i] = 0
     end
 
-
-
-    -- getRaidRosterInfo
     for i = 1, GetNumGroupMembers() do
         local unitName, _, subgroup = GetRaidRosterInfo(i)
-        unitName = SetupManager:stripServer(unitName)
+        local found = false
+        DevTool:AddData(unitName, "unitName")
+        local gmNickname = NSAPI:GetName(unitName) -- "Rilla" TODO: update this to include addon name(?)
+        DevTool:AddData(gmNickname, "gmNickname")
 
-        -- nickname to mainCharacter -> alts after if needed
-        if subgroup and type(subgroup) == "number" then
+        if subgroup and type(subgroup == "number") then
             raidMembers[unitName] = { index = i, group = subgroup }
             groupCounts[subgroup] = groupCounts[subgroup] + 1
 
-            local nickName = fullCharList[unitName] or unitName
-            -- Check if either the character or their main is in the setup
-            local isInSetup = false
+            for _, player in ipairs(playersByBoss[boss]) do
+                if player then
+                    local nickname = NSAPI:GetName(player) -- "Rilla" TODO: update this to include addon name(?)
 
-
-
-            for _, setupPlayer in ipairs(players) do
-
-                -- here "Dogmá" fails
-                --[[
-                1. Monda
-                2. Monda-Blackmoore
-
-                1. Dogma
-                2. Dogmá
-
-
-                ]]--
-                local setupPlayerWOServer = SetupManager:stripServer(setupPlayer)
-                local currentlyParsedSetupPlayer = fullCharList[setupPlayerWOServer] or setupPlayerWOServer
-
-                SetupManager:debug({
-                    currentlyParsedSetupPlayer = currentlyParsedSetupPlayer,
-                    nickName = nickName,
-                    setupPlayer = setupPlayer,
-                    setupPlayerNM = setupPlayerNM
-                }, "currentlyParsedSetupPlayer")
-
-
-                if currentlyParsedSetupPlayer == nickName then
-                    isInSetup = true
-                    assignedPlayers[unitName] = i
-                    break
+                    if nickname == gmNickname then
+                        found = true
+                        assignedPlayers[unitName] = i
+                        break
+                    end
                 end
             end
 
-            if not isInSetup then
+            if nickname ~= gmNickname and not found then
                 unassignedPlayers[unitName] = i
             end
         end
-    end
 
-    -- move unassignedPlayers to group 5-8
-    for unitName, index in pairs(unassignedPlayers) do
-        local currentGroup = raidMembers[unitName].group
-        if currentGroup <= 4 then
-            for newGroup = 8, totalGroups do
-                if groupCounts[newGroup] < maxGroupMembers then
-                    SetRaidSubgroup(index, newGroup)
-                    groupCounts[newGroup] = groupCounts[newGroup] - 1
-                    groupCounts[currentGroup] = groupCounts[currentGroup] + 1
-                    break
+        DevTool:AddData(unassignedPlayers, "unassignedPlayers")
+        DevTool:AddData(assignedPlayers, "assignedPlayers")
+        DevTool:AddData(raidMembers, "rmembers")
+
+        -- move unassignedPlayers to group 5-8
+        for unitName, index in ipairs(unassignedPlayers) do
+            local currentGroup = raidMembers[unitName].group
+            if currentGroup <= 4 then
+                for newGroup = 8, totalGroups do
+                    if groupCounts[newGroup] < maxGroupMembers then
+                        SetRaidSubgroup(index, newGroup)
+                        groupCounts[newGroup] = groupCounts[newGroup] - 1
+                        groupCounts[currentGroup] = groupCounts[currentGroup] + 1
+                        break
+                    end
                 end
             end
         end
@@ -306,8 +234,7 @@ function SetupManager:AssignPlayersToGroups(boss)
         groupLayout[i] = {}
     end
 
-    -- place players in group 1-4 based on assignedPlayers( player, slot)
-    -- TODO: ensure player is not moved if they're present in 1-4
+    -- prepare groupLayout for assigned players
     for player, slot in pairs(assignedPlayers) do
         slot = tonumber(slot)
         local targetGroup = math.ceil(slot / maxGroupMembers)
@@ -320,13 +247,15 @@ function SetupManager:AssignPlayersToGroups(boss)
         groupLayout[targetGroup][targetSlot] = player
     end
 
+    DevTool:AddData(groupLayout, "reworked GroupLayout")
+
     -- move players to correct group and slot
     for group, slots in ipairs(groupLayout) do
         if group <= 4 then
             for slot, player in ipairs(slots) do
                 if player then
 
-                    local index = raidMembers[player].index + ( 5 * (raidMembers[player].group -1))
+                    local index = raidMembers[player].index + (5 * (raidMembers[player].group - 1))
                     if index ~= assignedPlayers[player] then
                         SetRaidSubgroup(slot, group)
                     end
@@ -338,6 +267,7 @@ function SetupManager:AssignPlayersToGroups(boss)
 
     SetupManager:EvaluateMissingPlayers(boss)
 end
+
 -- Ulgrax:Rillasp+2,Rilladk+1,Fyfan,Rillaschwanß,Rillad+4
 -- Function to import bosses from and prepare boss-Table
 -- TODO: Add functionality for split bullshit (kms)
@@ -418,13 +348,6 @@ function SetupManager:DeleteBoss(boss)
     end
 end
 
-function SetupManager:ClearBosses()
-    if playersByBoss then
-        playersByBoss = nil
-        BossGroupManagerSaved.playersByBoss = nil
-        SetupManager:customPrint("Cleared all setups", "success")
-    end
-end
 
 -- Function to reorder players within their groups based on slots
 --[[

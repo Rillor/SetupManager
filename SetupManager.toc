@@ -2,7 +2,7 @@
 ## Title: Setup Manager
 ## Notes: Constant Tools
 ## Author: Rilla-Blackrock
-## Version: 1.0.2
+## Version: 1.1.0
 ## IconTexture: Interface\Addons\SetupManager\Interface\constantLogo.tga
 ## SavedVariables: BossGroupManagerSaved
 ## OptionalDps: ViragDevTool

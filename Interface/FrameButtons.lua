@@ -72,7 +72,7 @@ function SetupManager:UpdateBossButtons()
         inviteButton:SetHighlightTexture(inviteHighlightTexture)
 
         inviteButton:SetScript("OnClick", function()
-            SetupManager:InviteMissingPlayers(boss)
+            SetupManager:Invite(boss)
         end)
         inviteButton:Show()
 
