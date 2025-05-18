@@ -208,10 +208,6 @@ function SetupManager:AssignPlayersToGroups(boss)
         end
     end
 
-    DevTool:AddData(unassignedPlayers, "unassignedPlayers")
-    DevTool:AddData(assignedPlayers, "assignedPlayers")
-    DevTool:AddData(raidMembers, "rmembers")
-
     -- move unassignedPlayers to group 5-8
     for unitName, index in pairs(unassignedPlayers) do
         local currentGroup = raidMembers[unitName].group
