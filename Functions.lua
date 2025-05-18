@@ -152,7 +152,6 @@ end
 
 SetupManager.currentBoss = nil
 function SetupManager:AssignPlayersToGroups(boss)
-
     if not playersByBoss then
         SetupManager:customPrint("There have been no setups provided yet. Please copy sheet Input.", "err")
         return
@@ -184,18 +183,18 @@ function SetupManager:AssignPlayersToGroups(boss)
         local unitName, _, subgroup = GetRaidRosterInfo(i)
         local found = false
         DevTool:AddData(unitName, "unitName")
-        local gmNickname = NSAPI:GetName(unitName) -- "Rilla" TODO: update this to include addon name(?)
+        local gmNickname = NSAPI:GetName(unitName)
         DevTool:AddData(gmNickname, "gmNickname")
 
-        if subgroup and type(subgroup == "number") then
+        if subgroup and type(subgroup) == "number" then
             raidMembers[unitName] = { index = i, group = subgroup }
             groupCounts[subgroup] = groupCounts[subgroup] + 1
 
             for _, player in ipairs(playersByBoss[boss]) do
                 if player then
-                    local nickname = NSAPI:GetName(player) -- "Rilla" TODO: update this to include addon name(?)
+                    local setupNickname = NSAPI:GetName(player)
 
-                    if nickname == gmNickname then
+                    if setupNickname == gmNickname then
                         found = true
                         assignedPlayers[unitName] = i
                         break
@@ -203,26 +202,26 @@ function SetupManager:AssignPlayersToGroups(boss)
                 end
             end
 
-            if nickname ~= gmNickname and not found then
+            if not found then
                 unassignedPlayers[unitName] = i
             end
         end
+    end
 
-        DevTool:AddData(unassignedPlayers, "unassignedPlayers")
-        DevTool:AddData(assignedPlayers, "assignedPlayers")
-        DevTool:AddData(raidMembers, "rmembers")
+    DevTool:AddData(unassignedPlayers, "unassignedPlayers")
+    DevTool:AddData(assignedPlayers, "assignedPlayers")
+    DevTool:AddData(raidMembers, "rmembers")
 
-        -- move unassignedPlayers to group 5-8
-        for unitName, index in ipairs(unassignedPlayers) do
-            local currentGroup = raidMembers[unitName].group
-            if currentGroup <= 4 then
-                for newGroup = 8, totalGroups do
-                    if groupCounts[newGroup] < maxGroupMembers then
-                        SetRaidSubgroup(index, newGroup)
-                        groupCounts[newGroup] = groupCounts[newGroup] - 1
-                        groupCounts[currentGroup] = groupCounts[currentGroup] + 1
-                        break
-                    end
+    -- move unassignedPlayers to group 5-8
+    for unitName, index in pairs(unassignedPlayers) do
+        local currentGroup = raidMembers[unitName].group
+        if currentGroup <= 4 then
+            for newGroup = 8, 5, -1 do
+                if groupCounts[newGroup] < maxGroupMembers then
+                    SetRaidSubgroup(index, newGroup)
+                    groupCounts[newGroup] = groupCounts[newGroup] + 1
+                    groupCounts[currentGroup] = groupCounts[currentGroup] - 1
+                    break
                 end
             end
         end
@@ -235,16 +234,17 @@ function SetupManager:AssignPlayersToGroups(boss)
     end
 
     -- prepare groupLayout for assigned players
-    for player, slot in pairs(assignedPlayers) do
-        slot = tonumber(slot)
-        local targetGroup = math.ceil(slot / maxGroupMembers)
-        local targetSlot = slot % maxGroupMembers
+    for player, index in pairs(assignedPlayers) do
+        local targetGroup = math.ceil(index / maxGroupMembers)
+        local targetSlot = index % maxGroupMembers
 
         if targetSlot == 0 then
             targetSlot = maxGroupMembers
         end
 
-        groupLayout[targetGroup][targetSlot] = player
+        if targetGroup <= 4 then
+            groupLayout[targetGroup][targetSlot] = player
+        end
     end
 
     DevTool:AddData(groupLayout, "reworked GroupLayout")
@@ -252,14 +252,14 @@ function SetupManager:AssignPlayersToGroups(boss)
     -- move players to correct group and slot
     for group, slots in ipairs(groupLayout) do
         if group <= 4 then
-            for slot, player in ipairs(slots) do
-                if player then
+            for slot, player in pairs(slots) do
+                if player and raidMembers[player] then
+                    local currentGroup = raidMembers[player].group
+                    local currentIndex = raidMembers[player].index
 
-                    local index = raidMembers[player].index + (5 * (raidMembers[player].group - 1))
-                    if index ~= assignedPlayers[player] then
-                        SetRaidSubgroup(slot, group)
+                    if currentGroup ~= group then
+                        SetRaidSubgroup(currentIndex, group)
                     end
-
                 end
             end
         end

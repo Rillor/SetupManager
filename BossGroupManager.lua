@@ -71,8 +71,6 @@ SlashCmdList["RILLA"] = function(input)
         SetupManager:toggleWindowVisibility()
     elseif command == "s" then
         SetupManager:toggleImportDialog()
-    elseif command == "clear" then
-        SetupManager:ClearBosses()
     else
         print("Unknown command. Use /rilla import [BossName];[Players], /rilla delete [BossName], or /rilla toggle")
     end
