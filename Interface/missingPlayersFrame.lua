@@ -66,8 +66,14 @@ function SetupManager:ShowFailedInvites(failedInvites)
 
 
     for i, playername in pairs (failedInvites) do
+        local missingPlayer = NSAPI:GetName(playername)
+        local failedPlayerName = playername:match("^(.-)%-.+$") or playername
+        local failedPlayerGuildInfo = guildInfo[failedPlayerName]
+        local fpClass = failedPlayerGuildInfo.class or "ffffff"
+        local fphexcode = string.sub(RAID_CLASS_COLORS[fpClass].colorStr,-6)
+
         local textLine = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
-        textLine:SetText("|cffffffff"..playername.."|r")
+        textLine:SetText("|cff" .. fphexcode .. missingPlayer .. "|r")
         textLine:SetJustifyH("LEFT")
         textLine:SetWidth(settings.FRAME_WIDTH - (2* settings.FRAME_PADDING))
         textLine:SetPoint("TOPLEFT", frame, "TOPLEFT", settings.X_OFFSET, currentY)

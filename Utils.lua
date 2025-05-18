@@ -47,10 +47,10 @@ function SetupManager:getGuildInfo()
     local guildInfo = {}
     local numMembers = GetNumGuildMembers()
     for i = 1, numMembers do
-        local fullName, _, _, _, _, _, _, _, online = GetGuildRosterInfo(i)
+        local fullName, _, _, _, _, _, _, _, online, _, class = GetGuildRosterInfo(i)
         if fullName then
             local nameWithoutServer = SetupManager:stripServer(fullName)
-            guildInfo[nameWithoutServer] = { online = online, fullName = fullName }
+            guildInfo[nameWithoutServer] = { online = online, fullName = fullName, class = class }
         end
     end
     return guildInfo

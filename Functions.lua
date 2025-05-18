@@ -118,21 +118,20 @@ function SetupManager:Invite(boss)
         end
 
         if #failedInvites > 0 then
-            local guildInfo = SetupManager:getGuildInfo()
+            guildInfo = SetupManager:getGuildInfo()
 
             -- TODO: register nickname in failedInvites instead of characterName
             for _, failedPlayer in ipairs(failedInvites) do
-                DevTool:AddData(failedPlayer, "failedPlayer")
-                local fpNickname = NSAPI:GetName(failedPlayer) -- Rilla
 
+                local fpNickname = NSAPI:GetName(failedPlayer) or failedPlayer -- Rilla
                 local altList = NSAPI:GetCharacters(fpNickname)
-                DevTool:AddData(altList, "altList for player")
 
                 if altList then
                     local invitedAny = false
                     for _, characterName in ipairs(altList) do
                         local charName = characterName:match("^(.-)%-.+$") or characterName -- strip server from characterName as guildInfo does not include it in key
                         local altInfo = guildInfo[charName]
+
                         if altInfo and altInfo.online then
                             invitedAny = true
                             C_PartyInfo.InviteUnit(altInfo.fullName)
@@ -182,9 +181,7 @@ function SetupManager:AssignPlayersToGroups(boss)
     for i = 1, GetNumGroupMembers() do
         local unitName, _, subgroup = GetRaidRosterInfo(i)
         local found = false
-        DevTool:AddData(unitName, "unitName")
         local gmNickname = NSAPI:GetName(unitName)
-        DevTool:AddData(gmNickname, "gmNickname")
 
         if subgroup and type(subgroup) == "number" then
             raidMembers[unitName] = { index = i, group = subgroup }
@@ -242,8 +239,6 @@ function SetupManager:AssignPlayersToGroups(boss)
             groupLayout[targetGroup][targetSlot] = player
         end
     end
-
-    DevTool:AddData(groupLayout, "reworked GroupLayout")
 
     -- move players to correct group and slot
     for group, slots in ipairs(groupLayout) do
@@ -343,96 +338,3 @@ function SetupManager:DeleteBoss(boss)
         SetupManager.customPrint("Boss not found: " .. boss, "err")
     end
 end
-
-
--- Function to reorder players within their groups based on slots
---[[
-function SetupManager:ReorderPlayersWithinGroups()
-    local boss = SetupManager.currentBoss
-    if not boss or not playersByBoss[boss] then
-        SetupManager:customPrint("Consistency Check is missing boss", "info")
-        return
-    end
-
-    local players = playersByBoss[boss]
-    local maxGroupMembers = 5
-    local totalGroups = 8
-
-    -- Create group layout for assigned players
-    local groupLayout = {}
-    for i = 1, totalGroups do
-        groupLayout[i] = {}
-    end
-
-    -- Place players with specified slots first
-    for _, player in ipairs(players) do
-        local slot = tonumber(player:match("%+(%d+)$")) -- Extract slot if specified
-
-        if slot then
-            local targetGroup = math.ceil(slot / maxGroupMembers)
-            local targetSlot = slot % maxGroupMembers
-            if targetSlot == 0 then
-                targetSlot = maxGroupMembers
-            end
-
-            groupLayout[targetGroup][targetSlot] = player:match("^(.-)%+") -- Remove the slot from the player's name
-        end
-    end
-
-    -- Place players without specified slots
-    local nextSlot = 1
-    for _, player in ipairs(players) do
-        if not player:match("%+(%d+)$") then
-            while groupLayout[math.ceil(nextSlot / maxGroupMembers)][nextSlot % maxGroupMembers] do
-                nextSlot = nextSlot + 1
-            end
-
-            local targetGroup = math.ceil(nextSlot / maxGroupMembers)
-            local targetSlot = nextSlot % maxGroupMembers
-            if targetSlot == 0 then
-                targetSlot = maxGroupMembers
-            end
-
-            groupLayout[targetGroup][targetSlot] = player
-            nextSlot = nextSlot + 1
-        end
-    end
-
-    -- Reorder players within their respective groups
-    for group, slots in ipairs(groupLayout) do
-        if group <= 4 then
-            -- Collect current positions of players in the group
-            local currentPositions = {}
-            for i = 1, GetNumGroupMembers() do
-                local unitName, _, subgroup, _, class = GetRaidRosterInfo(i)
-                if subgroup == group then
-                    table.insert(currentPositions, { name = unitName, index = i, class = class })
-                end
-            end
-
-            -- Create a temporary table to hold the correct order
-            local tempPositions = {}
-            for _, player in ipairs(slots) do
-                if player then
-                    for _, pos in ipairs(currentPositions) do
-                        if pos.name == player then
-                            table.insert(tempPositions, pos)
-                            break
-                        end
-                    end
-                end
-            end
-
-            -- Move players within the group to match the correct order
-            for slot, pos in ipairs(tempPositions) do
-                if pos and currentPositions[player].index ~= tempPositions[playersByBoss].index then
-                    SetRaidSubgroup(pos.index, group)
-                    SetupManager:customPrint("Moved " .. pos.name .. " to group " .. group .. " slot " .. slot, "info")
-                end
-            end
-        end
-    end
-
-    SetupManager:customPrint("Reordered players within groups 1-4 successfully.", "success")
-end
-]]--
