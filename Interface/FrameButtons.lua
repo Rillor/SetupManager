@@ -7,9 +7,9 @@ function SetupManager:UpdateBossButtons()
         end
     end
 
-    local buttonWidth = 120
+    local buttonWidth = 100
     local buttonHeight = 30
-    local xOffset = 10
+    local xOffset = 0
     local yOffset = -40
     local index = 0
 
@@ -17,8 +17,16 @@ function SetupManager:UpdateBossButtons()
         local button = CreateFrame("Button", "BossButton" .. index, SetupManager.BossGroupManager)
         button:SetSize(buttonWidth, buttonHeight)
         button:SetText(boss)
-        button:SetPoint("TOPLEFT", xOffset, yOffset + (-1 * (buttonHeight + 5) * index))
+        button:SetPoint("TOPLEFT", xOffset, yOffset + (-1 * (buttonHeight + 3) * index))
         button:SetNormalFontObject("GameFontHighlight")
+
+        -- Align the text to the left
+        local text = button:GetFontString()
+        if text then
+            text:ClearAllPoints()
+            text:SetPoint("LEFT", 10, 0) -- Adjust '10' for padding from the left edge
+            text:SetJustifyH("LEFT")
+        end
 
 
         -- button background
@@ -88,11 +96,4 @@ function SetupManager:UpdateBossButtons()
         index = index + 1
     end
 
-    -- dynamic positiong for button if they would get bigger as SetupManager.bosses got bigger
-    local baseHeight = 40
-    local totalHeight = baseHeight + (buttonHeight + 5) * index
-    SetupManager.BossGroupManager:SetHeight(totalHeight)
-
-    -- adjust whole container if button amount changed
-    SetupManager.setupManager:SetHeight(totalHeight + 20)
 end

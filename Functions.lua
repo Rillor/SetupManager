@@ -128,7 +128,7 @@ function SetupManager:Invite(boss)
 
                 if altList then
                     local invitedAny = false
-                    for _, characterName in ipairs(altList) do
+                    for characterName, _ in pairs(altList) do
                         local charName = characterName:match("^(.-)%-.+$") or characterName -- strip server from characterName as guildInfo does not include it in key
                         local altInfo = guildInfo[charName]
 

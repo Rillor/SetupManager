@@ -9,7 +9,7 @@ SetupManager.setupManager.texture = SetupManager.setupManager:CreateTexture(nil,
 SetupManager.setupManager.texture:SetPoint("TOPLEFT", SetupManager.setupManager, "TOPLEFT")
 SetupManager.setupManager.texture:SetPoint("BOTTOMRIGHT", SetupManager.setupManager, "BOTTOMRIGHT")
 SetupManager.setupManager.texture:SetColorTexture(visual.defaultColor.r, visual.defaultColor.g, visual.defaultColor.b, visual.defaultColor.a)
-SetupManager.setupManager:SetSize(200, 350)
+SetupManager.setupManager:SetSize(160, 310)
 SetupManager.setupManager:SetPoint("CENTER")
 
 local borderColor = visual.borderColor

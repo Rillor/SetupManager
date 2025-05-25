@@ -14,18 +14,18 @@ local setupManager = SetupManager.setupManager
 -- Create the main frame inside the container
 SetupManager.BossGroupManager = CreateFrame("Frame", "BossGroupManagerFrame", setupManager)
 SetupManager.BossGroupManager:SetSize(180, 330) -- Adjusted size for the new layout
-SetupManager.BossGroupManager:SetPoint("TOPLEFT", setupManager, "TOPLEFT", 10, -10) -- Adjust position for border
+SetupManager.BossGroupManager:SetPoint("TOPLEFT", setupManager, "TOPLEFT", 5, -5) -- Adjust position for border
 
 -- Container for the title and icon
 SetupManager.titleContainer = CreateFrame("Frame", nil, SetupManager.BossGroupManager)
 SetupManager.titleContainer:SetSize(160, 40) -- Adjust size as needed
-SetupManager.titleContainer:SetPoint("TOP", SetupManager.BossGroupManager, "TOP", 0, 0) -- Center the container and adjust position
+SetupManager.titleContainer:SetPoint("TOP", SetupManager.BossGroupManager, "TOP", -15, 0) -- Center the container and adjust position
 
 -- Icon to the left of the title
 local titleIcon = SetupManager.titleContainer:CreateTexture(nil, "OVERLAY")
 titleIcon:SetSize(32, 32) -- Adjust size as needed
 titleIcon:SetTexture("Interface\\AddOns\\SetupManager\\Interface\\constantLogo.tga") -- Adjust path as needed
-titleIcon:SetPoint("LEFT", 8, 0)
+titleIcon:SetPoint("LEFT", 3, 0)
 
 -- Title for the main frame
 local title = SetupManager.titleContainer:CreateFontString("BossGroupManagerTitle", "OVERLAY", "GameFontNormal")
